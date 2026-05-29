@@ -1,27 +1,24 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
-import { ExternalLink, ArrowRight, Loader2 } from "lucide-react";
+import { ExternalLink, ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
-import { sanityFetch, imageUrl } from "../../lib/sanity";
 import { ProjectDetailsModal } from "./ProjectDetailsModal";
 
-interface SanityProject {
+interface DisplayProject {
   _id: string;
   title: string;
   category: string;
   description: string;
-  mainImage?: { asset: { _ref: string } };
+  resolvedImage: string;
   technologies?: string[];
   features?: string[];
   projectUrl?: string;
   caseStudyUrl?: string;
-  slug?: { current: string };
-  featured?: boolean;
   clientName?: string;
   duration?: string;
-  images?: { asset: { _ref: string } }[];
+  images?: string[];
   videos?: { url: string; title?: string }[];
   fullDescription?: string;
   results?: string[];
@@ -30,7 +27,7 @@ interface SanityProject {
   technicalApproach?: string;
   timeline?: { phase: string; description: string; duration?: string }[];
   metrics?: { label: string; value: string; description?: string }[];
-  testimonial?: { quote: string; author: string; role: string; avatar?: { asset: { _ref: string } } };
+  testimonial?: { quote: string; author: string; role: string; avatar?: string };
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -43,7 +40,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   network: "Network Management",
 };
 
-const FALLBACK_PROJECTS: DisplayProject[] = [
+const PROJECTS_DATA: DisplayProject[] = [
   {
     _id: "1",
     title: "Retail Operations Platform",
@@ -115,115 +112,9 @@ const FALLBACK_PROJECTS: DisplayProject[] = [
   },
 ];
 
-const PROJECT_QUERY = `*[_type == "project"] | order(sortOrder asc, _createdAt desc) {
-  _id,
-  title,
-  category,
-  description,
-  mainImage { asset { _ref } },
-  technologies,
-  features,
-  projectUrl,
-  caseStudyUrl,
-  slug,
-  featured,
-  clientName,
-  duration,
-  images[] { asset { _ref } },
-  videos[] { url, title },
-  fullDescription,
-  results,
-  challenges,
-  problemStatement,
-  technicalApproach,
-  timeline[] { phase, description, duration },
-  metrics[] { label, value, description },
-  testimonial { quote, author, role, avatar { asset { _ref } } }
-}`;
-
-type DisplayProject = {
-  _id: string;
-  title: string;
-  category: string;
-  description: string;
-  resolvedImage: string;
-  technologies?: string[];
-  features?: string[];
-  projectUrl?: string;
-  caseStudyUrl?: string;
-  clientName?: string;
-  duration?: string;
-  images?: string[];
-  videos?: { url: string; title?: string }[];
-  fullDescription?: string;
-  results?: string[];
-  challenges?: string[];
-  problemStatement?: string;
-  technicalApproach?: string;
-  timeline?: { phase: string; description: string; duration?: string }[];
-  metrics?: { label: string; value: string; description?: string }[];
-  testimonial?: { quote: string; author: string; role: string; avatar?: string };
-};
-
 export function ProjectsSection() {
-  const [projects, setProjects] = useState<DisplayProject[]>(FALLBACK_PROJECTS);
-  const [loading, setLoading] = useState(true);
-  const [usingCms, setUsingCms] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [selectedProject, setSelectedProject] = useState<DisplayProject | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  useEffect(() => {
-    console.log("[ProjectsSection] Fetching from Sanity CMS...");
-    sanityFetch<SanityProject[]>(PROJECT_QUERY)
-      .then((data) => {
-        console.log("[ProjectsSection] Sanity response:", data);
-        if (data && data.length > 0) {
-          const mapped: DisplayProject[] = data.map((p) => ({
-            _id: p._id,
-            title: p.title,
-            category: p.category,
-            description: p.description,
-            resolvedImage: p.mainImage?.asset?._ref
-              ? imageUrl(p.mainImage.asset._ref)
-              : FALLBACK_PROJECTS[0].resolvedImage,
-            technologies: p.technologies ?? [],
-            features: p.features ?? [],
-            projectUrl: p.projectUrl,
-            caseStudyUrl: p.caseStudyUrl,
-            clientName: p.clientName,
-            duration: p.duration,
-            images: p.images?.map((img) => imageUrl(img.asset._ref)) ?? [],
-            videos: p.videos ?? [],
-            fullDescription: p.fullDescription,
-            results: p.results ?? [],
-            challenges: p.challenges ?? [],
-            problemStatement: p.problemStatement,
-            technicalApproach: p.technicalApproach,
-            timeline: p.timeline ?? [],
-            metrics: p.metrics ?? [],
-            testimonial: p.testimonial ? {
-              quote: p.testimonial.quote,
-              author: p.testimonial.author,
-              role: p.testimonial.role,
-              avatar: p.testimonial.avatar?.asset?._ref ? imageUrl(p.testimonial.avatar.asset._ref) : undefined,
-            } : undefined,
-          }));
-          console.log(`[ProjectsSection] Successfully loaded ${mapped.length} projects from CMS`);
-          setProjects(mapped);
-          setUsingCms(true);
-          setError(null);
-        } else {
-          console.log("[ProjectsSection] No projects returned, using fallback");
-          setError("No projects found in CMS");
-        }
-      })
-      .catch((error) => {
-        console.error("[ProjectsSection] Sanity fetch error:", error);
-        setError(error.message || "Failed to load from CMS");
-      })
-      .finally(() => setLoading(false));
-  }, []);
 
   return (
     <section id="projects" className="py-28 md:py-40 bg-gradient-to-br from-[#D4E1F5] to-[#E8EEF7]">
@@ -243,26 +134,10 @@ export function ProjectsSection() {
           <p className="text-xl md:text-2xl text-[#5A6A7F] max-w-3xl mx-auto leading-relaxed">
             Enterprise systems built for African businesses across industries
           </p>
-          {loading && (
-            <div className="flex items-center justify-center gap-2 mt-4 text-sm text-[#5A6A7F]">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Connecting to Sanity CMS...
-            </div>
-          )}
-          {!loading && usingCms && (
-            <p className="mt-4 text-sm text-green-600 font-medium">
-              ✓ Live data from Sanity CMS ({projects.length} projects)
-            </p>
-          )}
-          {!loading && !usingCms && error && (
-            <p className="mt-4 text-sm text-orange-600">
-              Using fallback data - {error}
-            </p>
-          )}
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
-          {projects.map((project, index) => (
+          {PROJECTS_DATA.map((project, index) => (
             <motion.div
               key={project._id}
               initial={{ opacity: 0, y: 30 }}
