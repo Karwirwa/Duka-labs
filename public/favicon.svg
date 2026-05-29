@@ -1,0 +1,16 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with gradient -->
+  <rect width="64" height="64" rx="16" fill="url(#gradient)"/>
+
+  <!-- Letter D -->
+  <path d="M20 18H28C35.732 18 42 24.268 42 32C42 39.732 35.732 46 28 46H20V18Z" fill="white"/>
+  <path d="M26 24V40H28C32.418 40 36 36.418 36 32C36 27.582 32.418 24 28 24H26Z" fill="url(#gradient)"/>
+
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6B8BC3"/>
+      <stop offset="100%" stop-color="#8BA3C7"/>
+    </linearGradient>
+  </defs>
+</svg>
